@@ -15,6 +15,7 @@ def mock_repo():
     return repo
 
 
+# --- 1. TEST MƯỢN SÁCH (UC-08) ---
 def test_checkout_success(mock_repo):
     mock_repo.get_reader_info.return_value = (1, "Nguyen Van A", "a@gmail.com", "ACTIVE")
     mock_repo.get_unpaid_fines_total.return_value = 0.0
@@ -49,6 +50,7 @@ def test_checkout_fail_unpaid_fines(mock_repo):
         service.checkout_books(reader_id=1, employee_id=10, barcodes=["BC-001"])
 
 
+# --- 2. TEST TRẢ SÁCH & FIFO (UC-09) ---
 def test_checkin_assigns_fifo_reservation(mock_repo):
     mock_repo.execute_checkin.return_value = {
         "borrow_slip_id": 101,
@@ -61,3 +63,73 @@ def test_checkin_assigns_fifo_reservation(mock_repo):
 
     assert res["next_copy_status"] == "RESERVED"
     assert res["reserved_for_reader"] == 2
+
+
+# --- 3. TEST GIA HẠN MƯỢN SÁCH (UC-10) ---
+def test_renew_loan_success(mock_repo):
+    mock_repo.get_unpaid_fines_total.return_value = 0.0
+    borrow_date = datetime.now() - timedelta(days=5)
+    due_date = borrow_date + timedelta(days=14)
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.side_effect = [
+        (borrow_date, due_date, "BORROWED"),  # Thông tin phiếu mượn
+        (0,),                                  # 0 người đang đặt trước (WAITING)
+    ]
+    mock_repo.conn.cursor.return_value = mock_cursor
+
+    service = CirculationService(repo=mock_repo)
+    res = service.renew_loan(borrow_slip_id=101, reader_id=1)
+
+    assert res["borrow_slip_id"] == 101
+    assert res["new_due_date"] == due_date + timedelta(days=14)
+
+
+def test_renew_loan_fail_has_reservation(mock_repo):
+    mock_repo.get_unpaid_fines_total.return_value = 0.0
+    borrow_date = datetime.now() - timedelta(days=5)
+    due_date = borrow_date + timedelta(days=14)
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.side_effect = [
+        (borrow_date, due_date, "BORROWED"),
+        (1,),  # Có 1 người đang đặt trước -> phải chặn gia hạn
+    ]
+    mock_repo.conn.cursor.return_value = mock_cursor
+
+    service = CirculationService(repo=mock_repo)
+    with pytest.raises(ValueError, match="đang có độc giả khác đặt trước"):
+        service.renew_loan(borrow_slip_id=101, reader_id=1)
+
+
+# --- 4. TEST ĐẶT TRƯỚC SÁCH FIFO (UC-11) ---
+def test_reserve_book_success(mock_repo):
+    mock_repo.get_reader_info.return_value = (1, "Nguyen Van A", "a@gmail.com", "ACTIVE")
+    mock_repo.get_unpaid_fines_total.return_value = 0.0
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.side_effect = [
+        (0,),   # 0 bản sao AVAILABLE trên kệ -> cho phép đặt trước
+        (0,),   # Độc giả chưa đặt trước sách này
+        (55,),  # ReservationID mới sinh
+    ]
+    mock_repo.conn.cursor.return_value = mock_cursor
+
+    service = CirculationService(repo=mock_repo)
+    res = service.reserve_book(reader_id=1, isbn="978-0132350884")
+
+    assert res["reservation_id"] == 55
+    assert res["status"] == "WAITING"
+
+
+def test_reserve_book_fail_copy_available(mock_repo):
+    mock_repo.get_reader_info.return_value = (1, "Nguyen Van A", "a@gmail.com", "ACTIVE")
+    mock_repo.get_unpaid_fines_total.return_value = 0.0
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.return_value = (2,)  # Vẫn còn 2 cuốn AVAILABLE trên kệ -> chặn đặt trước
+    mock_repo.conn.cursor.return_value = mock_cursor
+
+    service = CirculationService(repo=mock_repo)
+    with pytest.raises(ValueError, match="vẫn còn bản sao sẵn sàng trên kệ"):
+        service.reserve_book(reader_id=1, isbn="978-0132350884")
