@@ -1,0 +1,17 @@
+cat <<EOT >> .gitignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# VS Code / PyCharm IDE
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+EOT
