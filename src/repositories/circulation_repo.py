@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from src.config.db_connection import DatabaseConnection
 class CirculationRepository:
     def __init__(self, conn=None):
-        self.conn = conn or DatabaseConnection.get_instance().get_connection()
+        self.conn = conn or DatabaseConnection().get_connection()
 
     def get_config_value(self, key: str, default_val: int) -> int:
         cursor = self.conn.cursor()

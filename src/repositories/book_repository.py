@@ -6,7 +6,7 @@ from src.models.book import BookTitle, BookCopy
 
 class BookRepository:
     def __init__(self):
-        self.db = DatabaseConnection.get_instance()
+        self.db = DatabaseConnection()
 
     def _get_conn(self):
         return self.db.get_connection()

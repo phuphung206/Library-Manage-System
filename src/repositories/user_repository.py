@@ -5,7 +5,7 @@ from src.models.user import User, Member, Librarian, Admin
 
 class UserRepository:
     def __init__(self):
-        self.db = DatabaseConnection.get_instance()
+        self.db = DatabaseConnection()
 
     def _get_conn(self):
         return self.db.get_connection()

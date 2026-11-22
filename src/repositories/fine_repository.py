@@ -3,7 +3,7 @@ from datetime import datetime
 
 class FineRepository:
     def __init__(self, connection):
-        self.conn = connection # Nhận kết nối pyodbc từ db_connection.py
+        self.conn = connection 
 
     # ================= 1. QUẢN LÝ CẤU HÌNH (CONFIGS) =================
     def get_all_configs(self):
