@@ -166,9 +166,10 @@ class MainWindow(tb.Window):
                 self.frames["dashboard"] = DashboardView(self.main_content, self.COLOR_MAIN_BG)
             self.frames["dashboard"].pack(fill=BOTH, expand=True)
             
-        elif view_key == "catalog":
+        elif view_key in ("catalog", "members"):
             if "catalog" not in self.frames:
                 self.frames["catalog"] = AuthCatalogView(self.main_content, self.catalog_service)
+            self.frames["catalog"].select_mode(view_key)
             self.frames["catalog"].pack(fill=BOTH, expand=True)
             
         elif view_key == "circulation":
