@@ -9,10 +9,7 @@ from src.services.auth_service import AuthService, UserService
 from src.services.catalog_service import CatalogService
 from src.utils.security import hash_password
 
-
-# =====================================================================
 # PHẦN A: KIỂM THỬ TÀI KHOẢN, XÁC THỰC & PHÂN QUYỀN (UC-04, 05, 06, 07, 12)
-# =====================================================================
 class TestAuthAndUserManagement:
 
     def test_register_member_success(self):
@@ -130,10 +127,7 @@ class TestAuthAndUserManagement:
         mock_repo.admin_update_user.return_value = True
         assert user_service.update_user_access(admin_actor, target_user_id=3, role="LIBRARIAN", status="ACTIVE") is True
 
-
-# =====================================================================
 # PHẦN B: KIỂM THỬ DANH MỤC OPAC & KHO BẢN SAO (UC-01, UC-02, UC-03)
-# =====================================================================
 class TestCatalogAndInventory:
 
     def test_guest_can_search_opac(self):
