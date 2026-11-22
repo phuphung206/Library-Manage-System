@@ -61,17 +61,26 @@ class FineRepository:
 
     # ================= 3. TRUY VẤN BÁO CÁO (REPORTS) =================
     def get_top_borrowed_books(self):
-        cursor = self.conn.cursor()
-        query = """
-            SELECT TOP 10 bt.title, COUNT(lt.loan_id) as borrow_count
-            FROM loan_transactions lt
-            JOIN book_copies bc ON lt.copy_id = bc.copy_id
-            JOIN book_titles bt ON bc.book_id = bt.book_id
-            GROUP BY bt.title
-            ORDER BY borrow_count DESC
-        """
-        cursor.execute(query)
-        return cursor.fetchall()
+        try:
+            cursor = self.conn.cursor() 
+            
+            query = '''
+                SELECT TOP 5 
+                    bt.title, 
+                    COUNT(bc.copy_id) as borrow_count
+                FROM book_titles bt
+                JOIN book_copies bc ON bt.title_id = bc.title_id
+                JOIN loan_transactions lt ON bc.copy_id = lt.copy_id
+                GROUP BY bt.title
+                ORDER BY borrow_count DESC
+            '''
+            
+            cursor.execute(query)
+            return cursor.fetchall()
+            
+        except Exception as e:
+            print("Lỗi khi lấy top sách mượn:", e)
+            return []
 
     def get_overdue_readers_report(self):
         cursor = self.conn.cursor()

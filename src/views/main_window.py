@@ -10,6 +10,7 @@ from datetime import datetime
 from src.config.db_connection import DatabaseConnection
 
 # Module 1: Catalog & Users
+from src.services.auth_service import AuthService, UserService
 from src.repositories.book_repository import BookRepository
 from src.services.catalog_service import CatalogService
 
@@ -65,6 +66,8 @@ class MainWindow(tb.Window):
         self.fine_repo = FineRepository(self.conn)
 
         # Services
+        self.auth_service = AuthService()
+        self.user_service = UserService()
         self.catalog_service = CatalogService(self.book_repo)
         self.circ_service = CirculationService(self.circ_repo)
         self.report_service = ReportFineService(self.fine_repo)
@@ -197,19 +200,29 @@ class MainWindow(tb.Window):
 
         if view_key == "dashboard":
             if "dashboard" not in self.frames:
-                self.frames["dashboard"] = DashboardView(self.main_content, self.COLOR_MAIN_BG)
+                self.frames["dashboard"] = DashboardView(
+                    self.main_content, 
+                    self.COLOR_MAIN_BG, 
+                    nav_callback=lambda view: self.on_nav_click(view, self.nav_buttons[view]),
+                    db_conn=self.conn
+                )
             self.frames["dashboard"].pack(fill=BOTH, expand=True)
 
         elif view_key in ("catalog", "members"):
             if "catalog" not in self.frames:
-                self.frames["catalog"] = AuthCatalogView(self.main_content, self.catalog_service)
+                self.frames["catalog"] = AuthCatalogView(
+                    self.main_content, 
+                    catalog_service=self.catalog_service,
+                    auth_service=self.auth_service,
+                    user_service=self.user_service
+                )
             if hasattr(self.frames["catalog"], "select_mode"):
                 self.frames["catalog"].select_mode(view_key)
             self.frames["catalog"].pack(fill=BOTH, expand=True)
 
         elif view_key == "circulation":
             if "circulation" not in self.frames:
-                self.frames["circulation"] = CirculationView(self.main_content, self.circ_service, self.COLOR_MAIN_BG)
+                self.frames["circulation"] = CirculationView(self.main_content, service=self.circ_service, bg_color=self.COLOR_MAIN_BG)
             if hasattr(self.frames["circulation"], "refresh_tables"):
                 self.frames["circulation"].refresh_tables()
             self.frames["circulation"].pack(fill=BOTH, expand=True)

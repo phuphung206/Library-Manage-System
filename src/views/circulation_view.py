@@ -102,7 +102,7 @@ class CirculationView(tk.Frame):
 
         # Bottom Data Tables (Active Loans & FIFO Reservations)
         tables_frame = tk.Frame(self, bg=self.bg_color)
-        tables_frame.pack(fill=BOTH, expand=True, padx=24, pady=(0, 18))
+        tables_frame.pack(fill=tk.BOTH, expand=True, padx=24, pady=(0, 18))
         tables_frame.columnconfigure(0, weight=1)
         tables_frame.columnconfigure(1, weight=1)
         tables_frame.rowconfigure(0, weight=1)
