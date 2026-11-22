@@ -6,34 +6,29 @@ class DatabaseConnection:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(DatabaseConnection, cls).__new__(cls)
-            cls._instance._connect()
+            cls._instance._init_connection()
         return cls._instance
 
-    def _connect(self):
-        """
-        Cấu hình thông tin kết nối đến Microsoft SQL Server
-        """
-        server_name = 'LAPTOP-PP8RNT1R\\SQLEXPRESS' 
+    def _init_connection(self):
+        # 1. Cấu hình chính xác Server và Database cho máy của bạn
+        server_name = r'LAPTOP-PP8RNT1R\SQLEXPRESS'
         database_name = 'library_management_system'
         
-        conn_str = (
+        # 2. Gán trực tiếp vào biến self.connection_string mà hệ thống cần
+        self.connection_string = (
             r'DRIVER={ODBC Driver 11 for SQL Server};'
             rf'SERVER={server_name};'
             rf'DATABASE={database_name};'
             r'Trusted_Connection=yes;'
         )
-        
-        try:
-            self.connection = pyodbc.connect(conn_str)
-            print("✅ Kết nối cơ sở dữ liệu SQL Server thành công!")
-        except pyodbc.Error as e:
-            print("❌ Lỗi kết nối CSDL. Vui lòng kiểm tra lại Server Name hoặc Driver.")
-            print(f"Chi tiết lỗi: {e}")
-            self.connection = None
+        self._conn = None
 
     def get_connection(self):
-        return self.connection
-
-if __name__ == "__main__":
-    db = DatabaseConnection()
-    conn = db.get_connection()
+        if self._conn is None:
+            try:
+                self._conn = pyodbc.connect(self.connection_string)
+                print("✅ Kết nối cơ sở dữ liệu SQL Server thành công!")
+            except pyodbc.Error as e:
+                print(f"❌ Lỗi kết nối CSDL. Chi tiết: {e}")
+                self._conn = None
+        return self._conn
